@@ -1,4 +1,4 @@
-module greptime-cloud-quick-start
+module github.com/GreptimeCloudStarters/quick-start-go
 
 go 1.18
 
