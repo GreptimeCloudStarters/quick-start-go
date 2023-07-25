@@ -18,7 +18,7 @@ import (
 	semconv "go.opentelemetry.io/otel/semconv/v1.17.0"
 )
 
-const Version = "0.1.2"
+const Version = "1.0.0"
 
 var dbHost = flag.String("host", "localhost", "The host address of the GreptimeCloud service")
 var db = flag.String("db", "public", "The name of the database of the GreptimeCloud service")
