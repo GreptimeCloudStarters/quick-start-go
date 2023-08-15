@@ -44,12 +44,12 @@ func main() {
 		panic(err)
 	}
 
-	reader := metric.NewPeriodicReader(exporter, metric.WithInterval(time.Second*2))
+	reader := metric.NewPeriodicReader(exporter, metric.WithInterval(time.Second*5))
 
 	res := resource.NewWithAttributes(
 		semconv.SchemaURL,
 		semconv.ServiceName("quick-start-demo-go"),
-		semconv.ServiceVersion("v0.1.0"),
+		semconv.ServiceVersion("v0.1.1"),
 	)
 
 	meterProvider := metric.NewMeterProvider(
