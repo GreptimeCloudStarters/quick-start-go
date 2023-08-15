@@ -18,7 +18,7 @@ import (
 	semconv "go.opentelemetry.io/otel/semconv/v1.17.0"
 )
 
-const Version = "1.0.0"
+const Version = "1.0.1"
 
 var dbHost = flag.String("host", "localhost", "The host address of the GreptimeCloud service")
 var db = flag.String("db", "public", "The name of the database of the GreptimeCloud service")
@@ -49,7 +49,6 @@ func main() {
 	res := resource.NewWithAttributes(
 		semconv.SchemaURL,
 		semconv.ServiceName("quick-start-demo-go"),
-		semconv.ServiceVersion("v0.1.1"),
 	)
 
 	meterProvider := metric.NewMeterProvider(
