@@ -18,26 +18,35 @@ import (
 	semconv "go.opentelemetry.io/otel/semconv/v1.17.0"
 )
 
-const Version = "1.0.1"
+const Version = "1.0.2"
 
-var dbHost = flag.String("host", "localhost", "The host address of the GreptimeCloud service")
-var db = flag.String("db", "public", "The name of the database of the GreptimeCloud service")
-var username = flag.String("username", "greptimeUser", "The username of the database")
-var password = flag.String("password", "greptimePassword", "The password of the database")
+var dbHost = flag.String("host", "localhost", "The host address of GreptimeDB.")
+var db = flag.String("db", "public", "The name of the database of GreptimeDB.")
+var username = flag.String("username", "", "The username of the database.")
+var password = flag.String("password", "", "The password of the database.")
 
 func main() {
 	flag.Parse()
+
+	opts := []otlpmetrichttp.Option{
+		otlpmetrichttp.WithURLPath("/v1/otlp/v1/metrics"),
+		otlpmetrichttp.WithTimeout(time.Second * 5)}
+
+	if *dbHost == "localhost" || *dbHost == "127.0.0.1" {
+		opts = append(opts, otlpmetrichttp.WithInsecure())
+		opts = append(opts, otlpmetrichttp.WithEndpoint(fmt.Sprintf("%s:4000", *dbHost)))
+	} else {
+		opts = append(opts, otlpmetrichttp.WithEndpoint(*dbHost))
+	}
+
 	auth := base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", *username, *password)))
+	opts = append(opts, otlpmetrichttp.WithHeaders(map[string]string{
+		"x-greptime-db-name": *db,
+		"Authorization":      "Basic " + auth}))
 
 	exporter, err := otlpmetrichttp.New(
 		context.Background(),
-		otlpmetrichttp.WithEndpoint(*dbHost),
-		otlpmetrichttp.WithURLPath("/v1/otlp/v1/metrics"),
-		otlpmetrichttp.WithHeaders(map[string]string{
-			"x-greptime-db-name": *db,
-			"Authorization":      "Basic " + auth,
-		}),
-		otlpmetrichttp.WithTimeout(time.Second*5),
+		opts...,
 	)
 
 	if err != nil {
