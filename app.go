@@ -24,6 +24,8 @@ var dbHost = flag.String("host", "localhost", "The host address of GreptimeDB.")
 var db = flag.String("db", "public", "The name of the database of GreptimeDB.")
 var username = flag.String("username", "", "The username of the database.")
 var password = flag.String("password", "", "The password of the database.")
+var secure = flag.Bool("secure", true, "Whether to use secure connection to GreptimeDB. `true` or `false`. Default is `true`.")
+var port = flag.String("port", "", "The port of the HTTP endpoint of GreptimeDB.")
 
 func main() {
 	flag.Parse()
@@ -32,12 +34,15 @@ func main() {
 		otlpmetrichttp.WithURLPath("/v1/otlp/v1/metrics"),
 		otlpmetrichttp.WithTimeout(time.Second * 5)}
 
-	if *dbHost == "localhost" || *dbHost == "127.0.0.1" {
+	if !*secure {
 		opts = append(opts, otlpmetrichttp.WithInsecure())
-		opts = append(opts, otlpmetrichttp.WithEndpoint(fmt.Sprintf("%s:4000", *dbHost)))
-	} else {
-		opts = append(opts, otlpmetrichttp.WithEndpoint(*dbHost))
 	}
+
+	endpoint := *dbHost
+	if *port != "" {
+		endpoint = fmt.Sprintf("%s:%s", *dbHost, *port)
+	}
+	opts = append(opts, otlpmetrichttp.WithEndpoint(endpoint))
 
 	auth := base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", *username, *password)))
 	opts = append(opts, otlpmetrichttp.WithHeaders(map[string]string{
