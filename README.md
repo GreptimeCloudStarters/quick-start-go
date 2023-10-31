@@ -22,10 +22,10 @@ go run . -host=<host> -db=<dbname> -username=<username> -password=<password>
 2. Commit and push code.
 3. Create a tag with the version and push it to the remote repository.
 
-```shell
-git tag v<major>.<minor>.<patch>
-git push origin v<major>.<minor>.<patch>
-```
+    ```shell
+    git tag v<major>.<minor>.<patch>
+    git push origin v<major>.<minor>.<patch>
+    ```
 
 4. Update pkg.go.dev via `GOPROXY=proxy.golang.org go list -m github.com/GreptimeCloudStarters/quick-start-go@v<major>.<minor>.<patch>`
 5. Write change log in [Github Release](https://github.com/GreptimeCloudStarters/quick-start-go/tags).
