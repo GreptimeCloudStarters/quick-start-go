@@ -24,7 +24,7 @@ var dbHost = flag.String("host", "localhost", "The host address of GreptimeDB.")
 var db = flag.String("db", "public", "The name of the database of GreptimeDB.")
 var username = flag.String("username", "", "The username of the database.")
 var password = flag.String("password", "", "The password of the database.")
-var secure = flag.Bool("secure", true, "Whether to use secure connection to GreptimeDB. `true` or `false`. Default is `true`.")
+var noSecure = flag.Bool("no-secure", false, "Do not use secure connection to GreptimeDB. `true` or `false`. Default is `false`.")
 var port = flag.String("port", "", "The port of the HTTP endpoint of GreptimeDB.")
 
 func main() {
@@ -34,7 +34,7 @@ func main() {
 		otlpmetrichttp.WithURLPath("/v1/otlp/v1/metrics"),
 		otlpmetrichttp.WithTimeout(time.Second * 5)}
 
-	if !*secure {
+	if *noSecure {
 		opts = append(opts, otlpmetrichttp.WithInsecure())
 	}
 
