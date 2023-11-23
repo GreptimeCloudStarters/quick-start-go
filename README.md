@@ -1,19 +1,19 @@
 # Introduction
 
-This is a quick start demo for [GreptimeCloud](https://greptime.cloud/). It collects the system metric data such as CPU and memory usage through Opentelemetry and sends the metrics to GreptimeCloud. You can view the metrics on the GreptimeCloud dashboard.
+This is a quick start demo for [GreptimeDB](https://greptime.com/product/db) and [GreptimeCloud](https://greptime.com/product/cloud). It collects the system metric data such as CPU and memory usage through Opentelemetry and sends the metrics to GreptimeDB.
 
 ## Quick Start
 
 Use the following command line to start sending metrics without cloning the project:
 
 ```shell
-go run github.com/GreptimeCloudStarters/quick-start-go@latest -host=<host> -db=<dbname> -username=<username> -password=<password>
+go run github.com/GreptimeCloudStarters/quick-start-go@latest -endpoint=<endpoint-url> -db=<dbname> -username=<username> -password=<password>
 ```
 
 Or clone the project and run the following command line:
 
 ```shell
-go run . -host=<host> -db=<dbname> -username=<username> -password=<password>
+go run . -endpoint=<endpoint-url> -db=<dbname> -username=<username> -password=<password>
 ```
 
 ## Release

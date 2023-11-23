@@ -3,9 +3,11 @@ package main
 import (
 	"context"
 	"encoding/base64"
+	"errors"
 	"flag"
 	"fmt"
 	"log"
+	"net/url"
 	"os"
 	"os/signal"
 	"time"
@@ -21,33 +23,31 @@ import (
 const Version = "1.0.2"
 
 var dbHost = flag.String("host", "localhost", "The host address of GreptimeDB.")
+var port = flag.String("port", "", "The port of the HTTP endpoint of GreptimeDB.")
 var db = flag.String("db", "public", "The name of the database of GreptimeDB.")
 var username = flag.String("username", "", "The username of the database.")
 var password = flag.String("password", "", "The password of the database.")
-var secure = flag.Bool("secure", true, "Whether to use secure connection to GreptimeDB. `true` or `false`. Default is `true`.")
-var port = flag.String("port", "", "The port of the HTTP endpoint of GreptimeDB.")
+var endpoint = flag.String("endpoint", "", "The HTTP endpoint of OTLP/HTTP exporter.")
 
 func main() {
 	flag.Parse()
 
-	opts := []otlpmetrichttp.Option{
-		otlpmetrichttp.WithURLPath("/v1/otlp/v1/metrics"),
-		otlpmetrichttp.WithTimeout(time.Second * 5)}
+	opts, err := generateOtlpHttpOptionsFromEndpoint(*endpoint)
 
-	if !*secure {
-		opts = append(opts, otlpmetrichttp.WithInsecure())
+	if err != nil {
+		panic(err)
 	}
 
-	endpoint := *dbHost
-	if *port != "" {
-		endpoint = fmt.Sprintf("%s:%s", *dbHost, *port)
+	if opts == nil {
+		opts, err = generateOtlpHttpOptionsFromHost(*dbHost, *port)
+		if err != nil {
+			panic(err)
+		}
 	}
-	opts = append(opts, otlpmetrichttp.WithEndpoint(endpoint))
 
-	auth := base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", *username, *password)))
-	opts = append(opts, otlpmetrichttp.WithHeaders(map[string]string{
-		"x-greptime-db-name": *db,
-		"Authorization":      "Basic " + auth}))
+	opts = append(opts, otlpmetrichttp.WithTimeout(time.Second*5))
+	headers := generateOtlpHttpHeaders(*db, *username, *password)
+	opts = append(opts, otlpmetrichttp.WithHeaders(headers))
 
 	exporter, err := otlpmetrichttp.New(
 		context.Background(),
@@ -87,4 +87,45 @@ func main() {
 	}
 
 	<-ctx.Done()
+}
+
+func generateOtlpHttpOptionsFromEndpoint(endpoint string) ([]otlpmetrichttp.Option, error) {
+	if endpoint == "" {
+		return nil, nil
+	}
+
+	u, err := url.Parse(endpoint)
+	if err != nil {
+		return nil, err
+	}
+
+	opts := []otlpmetrichttp.Option{otlpmetrichttp.WithEndpoint(u.Host)}
+	opts = append(opts, otlpmetrichttp.WithURLPath(u.Path))
+	if u.Scheme == "http" {
+		opts = append(opts, otlpmetrichttp.WithInsecure())
+	}
+
+	return opts, nil
+}
+
+func generateOtlpHttpOptionsFromHost(host string, port string) ([]otlpmetrichttp.Option, error) {
+	if host == "" {
+		return nil, errors.New("endpoint url or host is required")
+	}
+	opts := []otlpmetrichttp.Option{otlpmetrichttp.WithURLPath("/v1/otlp/v1/metrics")}
+	endpoint := host
+	if port != "" {
+		endpoint = fmt.Sprintf("%s:%s", host, port)
+	}
+	opts = append(opts, otlpmetrichttp.WithEndpoint(endpoint))
+	return opts, nil
+}
+
+func generateOtlpHttpHeaders(db string, username string, password string) map[string]string {
+	headers := map[string]string{"x-greptime-db-name": db}
+	if username != "" && password != "" {
+		auth := base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", username, password)))
+		headers["Authorization"] = "Basic " + auth
+	}
+	return headers
 }
